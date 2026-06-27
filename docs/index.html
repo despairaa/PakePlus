@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>三角洲 · 改枪码 | OOPZ风格</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --border: #e9edf2;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --accent: #0f172a;
+      --accent-soft: #f1f5f9;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+      --card-bg: #ffffff;
+      --tag-bg: #f1f5f9;
+      --tag-text: #334155;
+      --divider: #f1f5f9;
+      --copy-bg: #f8fafc;
+      --copy-border: #e2e8f0;
+      --copy-hover: #f1f5f9;
+      --tooltip-bg: #1e293b;
+      --tooltip-text: #f1f5f9;
+      --radius: 20px;
+    }
+
+    body.dark {
+      --bg: #0b1120;
+      --surface: #111827;
+      --border: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-tertiary: #64748b;
+      --accent: #e2e8f0;
+      --accent-soft: #1e293b;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+      --card-bg: #1a2332;
+      --tag-bg: #1e293b;
+      --tag-text: #cbd5e1;
+      --divider: #1e293b;
+      --copy-bg: #0f172a;
+      --copy-border: #334155;
+      --copy-hover: #1e293b;
+      --tooltip-bg: #e2e8f0;
+      --tooltip-text: #0f172a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      transition: background-color 0.3s ease, color 0.3s ease;
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      letter-spacing: -0.01em;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .logo {
+      font-weight: 600;
+      font-size: 1.8rem;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .badge {
+      background: var(--accent-soft);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.25rem 0.7rem;
+      border-radius: 30px;
+      margin-left: 0.25rem;
+      letter-spacing: 0.3px;
+      border: 1px solid var(--border);
+    }
+
+    .theme-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      box-shadow: var(--shadow);
+      font-size: 1.3rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .theme-toggle:hover {
+      background: var(--accent-soft);
+      border-color: var(--text-tertiary);
+    }
+
+    .gun-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .gun-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .gun-card:hover {
+      border-color: var(--text-tertiary);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .gun-card.copied-flash {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+      transition: all 0.15s ease;
+    }
+
+    body.dark .gun-card.copied-flash {
+      border-color: #059669 !important;
+      box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3) !important;
+    }
+
+    .gun-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 140px;
+      flex: 2;
+      position: relative;
+    }
+
+    .gun-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .gun-tooltip {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 0;
+      background: var(--tooltip-bg);
+      color: var(--tooltip-text);
+      padding: 0.5rem 0.9rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      pointer-events: none;
+      z-index: 20;
+      letter-spacing: 0.2px;
+      line-height: 1.4;
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+    }
+
+    .gun-tooltip.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .map-tag {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .code-block {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--copy-bg);
+      border: 1px solid var(--copy-border);
+      border-radius: 30px;
+      padding: 0.3rem 0.3rem 0.3rem 1.1rem;
+      transition: all 0.2s ease;
+      flex: 3;
+      min-width: 200px;
+      justify-content: space-between;
+    }
+
+    .code-text {
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: 0.2px;
+      word-break: break-all;
+      user-select: all;
+      line-height: 1.4;
+    }
+
+    .copy-icon {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      background: var(--copy-bg);
+      backdrop-filter: blur(4px);
+      flex-shrink: 0;
+    }
+
+    .copy-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .copy-icon.copied {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+      transition: 0.15s;
+    }
+
+    body.dark .copy-icon.copied {
+      background: #059669;
+      border-color: #059669;
+      color: white;
+    }
+
+    .footer-note {
+      display: none;
+    }
+
+    @media (max-width: 500px) {
+      body {
+        padding: 1rem 0.75rem;
+      }
+      .gun-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .code-block {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .gun-info {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo-area">
+        <span class="logo">DELTA</span>
+        <span class="badge">改枪码</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换黑白模式">
+        🌓
+      </button>
+    </div>
+
+    <div class="gun-list" id="gunList"></div>
+  </div>
+
+  <script>
+    (function() {
+      const gunData = [
+        { name: "M7战斗步枪", map: "烽火地带", code: "6K93AK001EESE5F6HHFNE", note: "" },
+        { name: "M14射手步枪", map: "烽火地带", code: "6KF61E0065Q2GG4V7O57U", note: "" },
+        { name: "AS Val突击步枪", map: "烽火地带", code: "6JUFRPG0A2NLQD4DRM4E3", note: "高操控" },
+        { name: "AS Val突击步枪", map: "烽火地带", code: "6K0C384045BKP2VCBL35G", note: "腰射" },
+        { name: "MK47突击步枪", map: "烽火地带", code: "6KF61JO065Q2GG4V7O57U", note: "" },
+        { name: "KC17突击步枪", map: "烽火地带", code: "6KF61A8065Q2GG4V7O57U", note: "" },
+        { name: "M700狙击步枪", map: "烽火地带", code: "6KF61RG065Q2GG4V7O57U", note: "" },
+        { name: "MP7冲锋枪", map: "烽火地带", code: "6KF6278065Q2GG4V7O57U", note: "" },
+        { name: "SR-3M紧凑突击步枪", map: "烽火地带", code: "6KF668O065Q2GG4V7O57U", note: "" },
+        { name: "AKM突击步枪", map: "烽火地带", code: "6KF68R8065Q2GG4V7O57U" },
+        { name: "新枪械", map: "烽火地带", code: "6KFXXXXXXXXXXXXXXXXX" }
+ ];
+
+      const gunListContainer = document.getElementById('gunList');
+      const copyIconSVG = `<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      const checkIconSVG = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+      function renderGuns() {
+        if (!gunListContainer) return;
+        
+        let htmlString = '';
+        gunData.forEach((gun, index) => {
+          const hasNote = gun.note && gun.note.trim().length > 0;
+          
+          htmlString += `
+            <div class="gun-card" data-index="${index}" data-code="${escapeHtml(gun.code)}">
+              <div class="gun-info">
+                <div class="gun-name">
+                  ${escapeHtml(gun.name)}
+                  <span class="map-tag">${escapeHtml(gun.map)}</span>
+                  ${hasNote ? '<span class="gun-tooltip">' + escapeHtml(gun.note.trim()) + '</span>' : ''}
+                </div>
+              </div>
+              <div class="code-block">
+                <span class="code-text" id="code-${index}">${escapeHtml(gun.code)}</span>
+                <span class="copy-icon" data-index="${index}">
+                  ${copyIconSVG}
+                </span>
+              </div>
+            </div>
+          `;
+        });
+        gunListContainer.innerHTML = htmlString;
+
+        document.querySelectorAll('.gun-card').forEach(card => {
+          card.addEventListener('click', handleCardClick);
+        });
+
+        document.querySelectorAll('.gun-card').forEach(card => {
+          const tooltip = card.querySelector('.gun-tooltip');
+          if (!tooltip) return;
+          
+          let hoverTimer;
+
+          card.addEventListener('mouseenter', () => {
+            hoverTimer = setTimeout(() => {
+              tooltip.classList.add('show');
+            }, 500);
+          });
+
+          card.addEventListener('mouseleave', () => {
+            clearTimeout(hoverTimer);
+            tooltip.classList.remove('show');
+          });
+        });
+      }
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      async function handleCardClick(event) {
+        const card = event.currentTarget;
+        const code = card.getAttribute('data-code');
+        const index = card.getAttribute('data-index');
+        
+        if (!code) return;
+
+        try {
+          await navigator.clipboard.writeText(code);
+          
+          card.classList.add('copied-flash');
+          
+          const iconElement = card.querySelector('.copy-icon');
+          if (iconElement) {
+            iconElement.innerHTML = checkIconSVG;
+            iconElement.classList.add('copied');
+          }
+          
+          const codeElement = document.getElementById(`code-${index}`);
+          if (codeElement) {
+            codeElement.style.color = '#10b981';
+            setTimeout(() => {
+              if (codeElement) codeElement.style.color = '';
+            }, 800);
+          }
+
+          setTimeout(() => {
+            card.classList.remove('copied-flash');
+            if (iconElement) {
+              iconElement.innerHTML = copyIconSVG;
+              iconElement.classList.remove('copied');
+            }
+          }, 1800);
+          
+        } catch (err) {
+          const textArea = document.createElement('textarea');
+          textArea.value = code;
+          textArea.style.position = 'fixed';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            card.classList.add('copied-flash');
+            const iconElement = card.querySelector('.copy-icon');
+            if (iconElement) {
+              iconElement.innerHTML = checkIconSVG;
+              iconElement.classList.add('copied');
+            }
+            setTimeout(() => {
+              card.classList.remove('copied-flash');
+              if (iconElement) {
+                iconElement.innerHTML = copyIconSVG;
+                iconElement.classList.remove('copied');
+              }
+            }, 1800);
+          } catch (e) {
+            alert('复制失败，请手动复制');
+          }
+          document.body.removeChild(textArea);
+        }
+      }
+
+      const themeToggle = document.getElementById('themeToggle');
+      
+      function applyTheme(mode) {
+        if (mode === 'dark') {
+          document.body.classList.add('dark');
+          if (themeToggle) themeToggle.innerHTML = '☀️';
+        } else {
+          document.body.classList.remove('dark');
+          if (themeToggle) themeToggle.innerHTML = '🌙';
+        }
+      }
+
+      function toggleTheme() {
+        if (document.body.classList.contains('dark')) {
+          applyTheme('light');
+          localStorage.setItem('delta-theme', 'light');
+        } else {
+          applyTheme('dark');
+          localStorage.setItem('delta-theme', 'dark');
+        }
+      }
+
+      const savedTheme = localStorage.getItem('delta-theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        applyTheme(savedTheme);
+      } else {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          applyTheme('dark');
+        } else {
+          applyTheme('light');
+        }
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+      }
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (localStorage.getItem('delta-theme') === null) {
+          applyTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+
+      renderGuns();
+    })();
+  </script>
+</body>
+</html>
