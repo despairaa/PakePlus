@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+  <title>人脸识别系统 · 移动端</title>
+  <!-- 引入 face-api.js 轻量人脸检测库 -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      background: #1e293b;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 95vh;
+      max-height: 800px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .header {
+      background: #0f172a;
+      padding: 20px 20px 15px;
+      text-align: center;
+      border-bottom: 1px solid #334155;
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .header h1 span {
+      background: #3b82f6;
+      color: white;
+      font-size: 1rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0;
+    }
+    .video-section {
+      position: relative;
+      background: #000;
+      aspect-ratio: 1 / 1.2;
+      width: 100%;
+      overflow: hidden;
+      border-bottom: 2px solid #3b82f6;
+    }
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scaleX(-1); /* 镜像效果，更自然 */
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+    .status-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    .controls {
+      padding: 16px 20px;
+      background: #1e293b;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      border-bottom: 1px solid #334155;
+    }
+    .btn {
+      background: #334155;
+      border: none;
+      color: #e2e8f0;
+      padding: 12px 18px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1 1 auto;
+      min-width: 80px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+      border: 1px solid #475569;
+      backdrop-filter: blur(4px);
+    }
+    .btn:active {
+      transform: scale(0.96);
+      background: #475569;
+    }
+    .btn.primary {
+      background: #3b82f6;
+      border-color: #60a5fa;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 0 15px rgba(59,130,246,0.5);
+    }
+    .btn.warning {
+      background: #f59e0b;
+      border-color: #fbbf24;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.5);
+    }
+    .info-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      background: #0f172a;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .recognition-result {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #334155;
+    }
+    .result-name {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #f8fafc;
+      text-align: center;
+      word-break: break-word;
+    }
+    .confidence {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+    .confidence strong {
+      color: #3b82f6;
+    }
+    .registered-list {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 14px;
+      border: 1px solid #334155;
+    }
+    .list-title {
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .list-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .name-tag {
+      background: #334155;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #475569;
+    }
+    .delete-reg {
+      background: transparent;
+      border: none;
+      color: #f87171;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .input-group input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 30px;
+      padding: 12px 16px;
+      color: white;
+      font-size: 1rem;
+      outline: none;
+    }
+    .input-group input:focus {
+      border-color: #3b82f6;
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 5px;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="header">
+    <h1>
+      🔍 人脸识别
+      <span>离线版</span>
+    </h1>
+  </div>
+
+  <div class="video-section">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="status-badge">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">就绪</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="registerBtn" title="注册当前人脸">
+      <span>📸</span> 注册
+    </button>
+    <button class="btn warning" id="recognizeBtn" title="识别画面中的人脸">
+      <span>🔎</span> 识别
+    </button>
+    <button class="btn" id="clearAllBtn" title="清除所有注册数据">
+      <span>🗑️</span> 清空
+    </button>
+  </div>
+
+  <div class="info-panel">
+    <div class="recognition-result" id="resultBox">
+      <div class="result-name" id="displayName">👤 未识别</div>
+      <div class="confidence" id="confidenceText">等待检测...</div>
+    </div>
+
+    <div class="registered-list">
+      <div class="list-title">
+        <span>📋 已注册人脸</span>
+        <span id="countBadge" style="background:#3b82f6; padding:2px 10px; border-radius:12px; font-size:0.8rem;">0</span>
+      </div>
+      <div class="list-items" id="registeredNamesList">
+        <span style="color:#64748b; font-size:0.8rem;">暂无注册</span>
+      </div>
+      <div class="input-group" style="margin-top:12px;">
+        <input type="text" id="nameInput" placeholder="输入姓名, 例如: 张三" autocomplete="off" />
+      </div>
+    </div>
+    <div class="footer-note">
+      ⚡ 使用 face-api.js · 纯前端识别
+    </div>
+  </div>
+</div>
+
+<script>
+  (async function() {
+    // ---------- 全局变量 ----------
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    const displayName = document.getElementById('displayName');
+    const confidenceText = document.getElementById('confidenceText');
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+    const registerBtn = document.getElementById('registerBtn');
+    const recognizeBtn = document.getElementById('recognizeBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const nameInput = document.getElementById('nameInput');
+    const registeredNamesList = document.getElementById('registeredNamesList');
+    const countBadge = document.getElementById('countBadge');
+
+    // 存储已注册人脸描述符 (姓名 -> 描述符数组)
+    let registeredFaces = new Map(); 
+    // 当前检测到的人脸描述符 (用于注册)
+    let currentDescriptor = null;
+    // 模型加载状态
+    let modelsLoaded = false;
+    // 是否正在处理识别/注册 (防止连点)
+    let isProcessing = false;
+    // 定时器ID
+    let detectInterval = null;
+    // 当前是否处于持续识别模式
+    let continuousRecognition = false;
+
+    // ---------- 工具函数 ----------
+    function updateStatus(text, dotColor = '#10b981') {
+      statusText.textContent = text;
+      statusDot.style.background = dotColor;
+    }
+
+    // 更新已注册列表UI
+    function renderRegisteredList() {
+      const names = Array.from(registeredFaces.keys());
+      countBadge.textContent = names.length;
+      if (names.length === 0) {
+        registeredNamesList.innerHTML = '<span style="color:#64748b; font-size:0.8rem;">暂无注册</span>';
+        return;
+      }
+      registeredNamesList.innerHTML = names.map(name => {
+        return `<div class="name-tag">
+                  <span>${escapeHtml(name)}</span>
+                  <button class="delete-reg" data-name="${escapeHtml(name)}" title="删除">✕</button>
+                </div>`;
+      }).join('');
+      
+      // 绑定删除事件
+      document.querySelectorAll('.delete-reg').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const name = btn.getAttribute('data-name');
+          if (name && registeredFaces.has(name)) {
+            registeredFaces.delete(name);
+            renderRegisteredList();
+            // 如果当前显示的是被删除的人，重置结果
+            if (displayName.textContent.includes(name)) {
+              displayName.textContent = '👤 未识别';
+              confidenceText.textContent = '已删除该用户';
+            }
+            updateStatus(`已删除 "${name}"`, '#f59e0b');
+            // 保存到本地存储
+            saveToLocalStorage();
+          }
+        });
+      });
+    }
+
+    // 简单转义防止XSS
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        return '&#039;';
+      });
+    }
+
+    // 本地存储持久化
+    function saveToLocalStorage() {
+      try {
+        const serialized = {};
+        registeredFaces.forEach((descriptors, name) => {
+          serialized[name] = descriptors.map(d => Array.from(d));
+        });
+        localStorage.setItem('face_recognition_data', JSON.stringify(serialized));
+      } catch (e) {
+        console.warn('存储失败', e);
+      }
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const stored = localStorage.getItem('face_recognition_data');
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        registeredFaces.clear();
+        for (const [name, descArrays] of Object.entries(parsed)) {
+          registeredFaces.set(name, descArrays.map(arr => new Float32Array(arr)));
+        }
+        renderRegisteredList();
+        updateStatus('已加载存储数据', '#3b82f6');
+      } catch (e) {
+        console.warn('加载存储失败', e);
+        registeredFaces.clear();
+      }
+    }
+
+    // 计算两个描述符的欧氏距离 (越小越相似)
+    function euclideanDistance(desc1, desc2) {
+      let sum = 0;
+      for (let i = 0; i < desc1.length; i++) {
+        const diff = desc1[i] - desc2[i];
+        sum += diff * diff;
+      }
+      return Math.sqrt(sum);
+    }
+
+    // 在已注册人脸中查找最佳匹配
+    function findBestMatch(descriptor) {
+      let bestName = null;
+      let bestDistance = Infinity;
+      const threshold = 0.6; // 距离阈值，小于此值认为是同一人
+
+      for (const [name, descriptors] of registeredFaces.entries()) {
+        for (const registeredDesc of descriptors) {
+          const dist = euclideanDistance(descriptor, registeredDesc);
+          if (dist < bestDistance) {
+            bestDistance = dist;
+            bestName = name;
+          }
+        }
+      }
+      
+      if (bestDistance < threshold && bestName) {
+        return { name: bestName, distance: bestDistance };
+      }
+      return null;
+    }
+
+    // ---------- 人脸检测与绘制 ----------
+    async function detectAndDraw() {
+      if (!modelsLoaded || !video.readyState === 4) return;
+      
+      try {
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
+        const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
+        
+        // 调整canvas尺寸匹配视频
+        if (video.videoWidth && video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (result) {
+          const { detection, descriptor } = result;
+          currentDescriptor = descriptor;
+          const box = detection.box;
+          
+          // 绘制人脸框
+          ctx.strokeStyle = '#3b82f6';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+          
+          // 绘制关键点
+          if (result.landmarks) {
+            ctx.fillStyle = '#fbbf24';
+            for (const point of result.landmarks.positions) {
+              ctx.beginPath();
+              ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+              ctx.fill();
+            }
+          }
+          
+          // 如果处于连续识别模式，自动进行识别
+          if (continuousRecognition && !isProcessing && registeredFaces.size > 0) {
+            performRecognition(descriptor);
+          }
+        } else {
+          currentDescriptor = null;
+          if (continuousRecognition) {
+            displayName.textContent = '👤 未检测到人脸';
+            confidenceText.textContent = '请对准摄像头';
+          }
+        }
+      } catch (e) {
+        console.warn('检测错误', e);
+      }
+    }
+
+    // 执行识别 (传入描述符)
+    async function performRecognition(descriptor) {
+      if (!descriptor || registeredFaces.size === 0) {
+        displayName.textContent = '👤 无注册数据';
+        confidenceText.textContent = '请先注册人脸';
+        return;
+      }
+      
+      const match = findBestMatch(descriptor);
+      if (match) {
+        const confidencePercent = Math.max(0, Math.round((1 - match.distance) * 100));
+        displayName.textContent = `✅ ${match.name}`;
+        confidenceText.innerHTML = `置信度 <strong>${confidencePercent}%</strong> (距离: ${match.distance.toFixed(2)})`;
+      } else {
+        displayName.textContent = '❌ 未知人员';
+        confidenceText.textContent = '未匹配到已注册人脸';
+      }
+    }
+
+    // 开始持续检测循环
+    function startDetectionLoop() {
+      if (detectInterval) clearInterval(detectInterval);
+      detectInterval = setInterval(() => {
+        if (!isProcessing) {
+          detectAndDraw();
+        }
+      }, 300); // 约300ms检测一次
+    }
+
+    // 停止持续检测
+    function stopDetectionLoop() {
+      if (detectInterval) {
+        clearInterval(detectInterval);
+        detectInterval = null;
+      }
+    }
+
+    // 重置识别模式状态
+    function disableContinuousMode() {
+      continuousRecognition = false;
+      recognizeBtn.style.background = '#f59e0b';
+      recognizeBtn.style.color = '#0f172a';
+      recognizeBtn.innerHTML = '<span>🔎</span> 识别';
+    }
+
+    // ---------- 摄像头初始化 ----------
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 800 }
+          } 
+        });
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+          updateStatus('摄像头已就绪', '#10b981');
+        };
+      } catch (err) {
+        updateStatus('摄像头访问失败', '#ef4444');
+        alert('无法访问摄像头，请确保已授权。');
+        console.error(err);
+      }
+    }
+
+    // ---------- 加载AI模型 ----------
+    async function loadModels() {
+      try {
+        updateStatus('加载模型中...', '#f59e0b');
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        modelsLoaded = true;
+        updateStatus('模型就绪', '#10b981');
+        startDetectionLoop();
+      } catch (error) {
+        updateStatus('模型加载失败', '#ef4444');
+        console.error('模型加载失败:', error);
+        alert('模型加载失败，请检查网络连接。');
+      }
+    }
+
+    // ---------- 事件处理 ----------
+    registerBtn.addEventListener('click', async () => {
+      if (!modelsLoaded || isProcessing) return;
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert('请先在输入框填写姓名');
+        nameInput.focus();
+        return;
+      }
+      if (!currentDescriptor) {
+        alert('未检测到人脸，请确保脸部出现在画面中');
+        return;
+      }
+      
+      isProcessing = true;
+      registerBtn.disabled = true;
+      
+      try {
+        // 存储描述符
+        if (!registeredFaces.has(name)) {
+          registeredFaces.set(name, []);
+        }
+        registeredFaces.get(name).push(currentDescriptor);
+        
+        renderRegisteredList();
+        saveToLocalStorage();
+        displayName.textContent = `✅ 已注册: ${name}`;
+        confidenceText.textContent = '注册成功！';
+        updateStatus(`已注册 "${name}"`, '#10b981');
+        nameInput.value = ''; // 清空输入框
+      } catch (e) {
+        alert('注册失败: ' + e.message);
+      } finally {
+        isProcessing = false;
+        registerBtn.disabled = false;
+      }
+    });
+
+    recognizeBtn.addEventListener('click', () => {
+      if (!modelsLoaded || isProcessing) return;
+      
+      // 切换连续识别模式
+      continuousRecognition = !continuousRecognition;
+      
+      if (continuousRecognition) {
+        recognizeBtn.style.background = '#ef4444';
+        recognizeBtn.style.color = 'white';
+        recognizeBtn.innerHTML = '<span>⏹️</span> 停止识别';
+        updateStatus('连续识别中...', '#3b82f6');
+        if (registeredFaces.size === 0) {
+          displayName.textContent = '⚠️ 暂无注册人脸';
+          confidenceText.textContent = '请先注册';
+        }
+      } else {
+        disableContinuousMode();
+        updateStatus('识别已停止', '#94a3b8');
+        // 如果当前有描述符，做一次单次识别
+        if (currentDescriptor && registeredFaces.size > 0) {
+          performRecognition(currentDescriptor);
+        } else {
+          displayName.textContent = '👤 未识别';
+          confidenceText.textContent = '等待检测...';
+        }
+      }
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      if (isProcessing) return;
+      if (registeredFaces.size === 0) {
+        alert('没有已注册的人脸数据');
+        return;
+      }
+      if (confirm('确定要清除所有已注册的人脸数据吗？此操作不可恢复。')) {
+        registeredFaces.clear();
+        renderRegisteredList();
+        saveToLocalStorage();
+        displayName.textContent = '👤 未识别';
+        confidenceText.textContent = '已清空所有数据';
+        updateStatus('数据已清空', '#f59e0b');
+        if (continuousRecognition) {
+          disableContinuousMode();
+          updateStatus('识别已停止', '#94a3b8');
+        }
+      }
+    });
+
+    // 输入框回车快速注册
+    nameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        registerBtn.click();
+      }
+    });
+
+    // 清理资源 (页面关闭时)
+    window.addEventListener('beforeunload', () => {
+      stopDetectionLoop();
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+      }
+    });
+
+    // ---------- 启动流程 ----------
+    async function init() {
+      loadFromLocalStorage();
+      await setupCamera();
+      await loadModels();
+      // 默认不开启连续识别
+      disableContinuousMode();
+    }
+
+    init().catch(err => {
+      console.error('初始化失败', err);
+      updateStatus('初始化错误', '#ef4444');
+    });
+
+  })();
+</script>
+</body>
+</html>
